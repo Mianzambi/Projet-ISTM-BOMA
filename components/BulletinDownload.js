@@ -36,7 +36,7 @@ function BulletinDocument({ studentName, filiere, niveau, resultats, moyenne }) 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>ISC/BOMA — Relevé de notes</Text>
+        <Text style={styles.title}>ISTM/BOMA — Relevé de notes</Text>
         <Text style={styles.subtitle}>
           {studentName} — {niveau} {filiere}
         </Text>

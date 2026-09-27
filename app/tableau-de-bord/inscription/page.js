@@ -20,6 +20,9 @@ export default function InscriptionFormPage() {
   const [success, setSuccess] = useState(false);
   const [statut, setStatut] = useState(null);
 
+  // Type de dossier : 'reinscription' (déjà inscrit à l'ISTM) ou 'nouveau' (nouvelle demande)
+  const [typeDossier, setTypeDossier] = useState("reinscription");
+
   const [cycle, setCycle] = useState("Licence");
   const [filiere, setFiliere] = useState("");
   const [niveau, setNiveau] = useState("");
@@ -106,9 +109,12 @@ export default function InscriptionFormPage() {
         return;
       }
 
-      for (const doc of DOCUMENTS) {
-        if (!files[doc.key] && !existingPaths[doc.key]) {
-          throw new Error(`Le document "${doc.label}" est obligatoire.`);
+      // Si c'est un nouveau candidat, exiger les pièces jointes
+      if (typeDossier === "nouveau") {
+        for (const doc of DOCUMENTS) {
+          if (!files[doc.key] && !existingPaths[doc.key]) {
+            throw new Error(`Pour une nouvelle inscription, le document "${doc.label}" est obligatoire.`);
+          }
         }
       }
 
@@ -135,12 +141,12 @@ export default function InscriptionFormPage() {
           sexe,
           adresse,
           telephone,
-          ecole_origine: ecoleOrigine,
-          diplome_path: paths.diplome,
-          carte_identite_path: paths.carte_identite,
-          photo_path: paths.photo,
-          acte_naissance_path: paths.acte_naissance,
-          statut: "en_attente",
+          ecole_origine: ecoleOrigine || "ISTM-BOMA",
+          diplome_path: paths.diplome || null,
+          carte_identite_path: paths.carte_identite || null,
+          photo_path: paths.photo || null,
+          acte_naissance_path: paths.acte_naissance || null,
+          statut: typeDossier === "reinscription" ? "validee" : "en_attente",
         },
         { onConflict: "user_id" }
       );
@@ -148,7 +154,7 @@ export default function InscriptionFormPage() {
       if (upsertError) throw upsertError;
 
       setSuccess(true);
-      setStatut("en_attente");
+      setStatut(typeDossier === "reinscription" ? "validee" : "en_attente");
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       setError(err.message || "Une erreur est survenue, réessaie.");
@@ -175,7 +181,7 @@ export default function InscriptionFormPage() {
             <button onClick={() => router.push('/tableau-de-bord')} className="text-slate-400 hover:text-slate-700 transition-colors">
               <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             </button>
-            <h1 className="font-bold text-slate-800">Dossier d'inscription</h1>
+            <h1 className="font-bold text-slate-800">Dossier d'inscription académique</h1>
           </div>
         </div>
       </header>
@@ -185,7 +191,9 @@ export default function InscriptionFormPage() {
         {statut && (
           <div className="mb-6 bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm reveal-scale">
             <span className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Statut actuel du dossier</span>
-            <span className="px-3 py-1 bg-amber-100 text-amber-800 text-sm font-bold rounded-lg border border-amber-200">
+            <span className={`px-3 py-1 text-sm font-bold rounded-lg border ${
+              statut === 'validee' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : 'bg-amber-100 text-amber-800 border-amber-200'
+            }`}>
               {statutLabels[statut]?.text || statut}
             </span>
           </div>
@@ -193,7 +201,7 @@ export default function InscriptionFormPage() {
 
         {success && (
           <div className="mb-6 bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl text-sm shadow-sm reveal-scale">
-            <strong>C'est enregistré !</strong> Ta demande a bien été soumise. Tu recevras une notification une fois ton dossier examiné par l'administration.
+            <strong>C'est enregistré !</strong> Votre dossier a été mis à jour avec succès.
           </div>
         )}
 
@@ -203,13 +211,53 @@ export default function InscriptionFormPage() {
           </div>
         )}
 
+        {/* Sélecteur de type de dossier */}
+        <div className="mb-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm reveal">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Sélectionnez votre situation</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
+              typeDossier === "reinscription" ? "border-blue-600 bg-blue-50/50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+            }`}>
+              <input 
+                type="radio" 
+                name="typeDossier" 
+                value="reinscription" 
+                checked={typeDossier === "reinscription"}
+                onChange={() => setTypeDossier("reinscription")}
+                className="mt-1 text-blue-600"
+              />
+              <div>
+                <div className="font-bold text-slate-900 text-sm">Déjà étudiant à l'ISTM-BOMA</div>
+                <div className="text-xs text-slate-500 mt-1">Réinscription / Poursuite d'études. Pièces jointes optionnelles.</div>
+              </div>
+            </label>
+
+            <label className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-start gap-3 ${
+              typeDossier === "nouveau" ? "border-blue-600 bg-blue-50/50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"
+            }`}>
+              <input 
+                type="radio" 
+                name="typeDossier" 
+                value="nouveau" 
+                checked={typeDossier === "nouveau"}
+                onChange={() => setTypeDossier("nouveau")}
+                className="mt-1 text-blue-600"
+              />
+              <div>
+                <div className="font-bold text-slate-900 text-sm">Nouveau candidat</div>
+                <div className="text-xs text-slate-500 mt-1">Première inscription à l'ISTM-BOMA. Pièces numérisées requises.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           
           {/* Section 1 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm reveal hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
               <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
-              <h3 className="text-lg font-bold text-slate-800">Formation souhaitée</h3>
+              <h3 className="text-lg font-bold text-slate-800">Formation choisie</h3>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -221,7 +269,7 @@ export default function InscriptionFormPage() {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="Licence">Licence (Sections Organisées)</option>
-                  <option value="Passerelle">Passerelle (Licence Spéciale 1,5 an)</option>
+                  <option value="Passerelle">Passerelle (Licence Spéciale)</option>
                   <option value="Master">Master</option>
                 </select>
               </div>
@@ -240,7 +288,7 @@ export default function InscriptionFormPage() {
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Filière</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Filière / Spécialité</label>
                 <select 
                   value={filiere} 
                   onChange={(e) => setFiliere(e.target.value)} 
@@ -272,7 +320,7 @@ export default function InscriptionFormPage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm reveal hover:shadow-md transition-shadow">
             <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
               <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">2</div>
-              <h3 className="text-lg font-bold text-slate-800">Informations personnelles</h3>
+              <h3 className="text-lg font-bold text-slate-800">Informations de l'étudiant</h3>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -282,7 +330,7 @@ export default function InscriptionFormPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Lieu de naissance</label>
-                <input type="text" value={lieuNaissance} onChange={(e) => setLieuNaissance(e.target.value)} required placeholder="Ex: Kinshasa" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                <input type="text" value={lieuNaissance} onChange={(e) => setLieuNaissance(e.target.value)} required placeholder="Ex: Boma" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Sexe</label>
@@ -301,18 +349,24 @@ export default function InscriptionFormPage() {
                 <input type="text" value={adresse} onChange={(e) => setAdresse(e.target.value)} required placeholder="Commune, Quartier, Avenue, Numéro" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">École d'origine (dernier établissement)</label>
-                <input type="text" value={ecoleOrigine} onChange={(e) => setEcoleOrigine(e.target.value)} required placeholder="Nom de l'institut ou complexe scolaire" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">École d'origine / Établissement précédent</label>
+                <input type="text" value={ecoleOrigine} onChange={(e) => setEcoleOrigine(e.target.value)} placeholder="Ex: ISTM-BOMA ou Institut Médical" className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </div>
             </div>
           </div>
 
           {/* Section 3 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm reveal hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3 mb-2 border-b border-slate-100 pb-4">
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">3</div>
-              <h3 className="text-lg font-bold text-slate-800">Pièces jointes</h3>
+            <div className="flex items-center justify-between mb-2 border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">3</div>
+                <h3 className="text-lg font-bold text-slate-800">Pièces justificatives</h3>
+              </div>
+              {typeDossier === "reinscription" && (
+                <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-md">Optionnel (Réinscription)</span>
+              )}
             </div>
+            
             <p className="text-xs text-slate-500 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-100">
               ℹ️ Formats acceptés : PDF, JPG, PNG — <strong>5 Mo max par fichier</strong>.
             </p>
@@ -322,7 +376,9 @@ export default function InscriptionFormPage() {
                 <div key={doc.key} className="p-4 border border-slate-200 rounded-xl hover:border-blue-300 transition-colors bg-slate-50/50">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-slate-800">{doc.label}</label>
+                      <label className="block text-sm font-bold text-slate-800">
+                        {doc.label} {typeDossier === "nouveau" && <span className="text-red-500">*</span>}
+                      </label>
                       {existingPaths[doc.key] && !files[doc.key] && (
                         <span className="inline-flex items-center gap-1 text-emerald-600 text-xs font-semibold mt-1">
                           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path></svg>
@@ -350,7 +406,7 @@ export default function InscriptionFormPage() {
               className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70"
               disabled={saving}
             >
-              {saving ? "Enregistrement en cours…" : "Soumettre mon dossier d'inscription"}
+              {saving ? "Enregistrement en cours…" : "Valider mon dossier académique"}
             </button>
           </div>
           

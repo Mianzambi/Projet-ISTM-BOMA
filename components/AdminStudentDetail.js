@@ -202,7 +202,7 @@ export default function AdminStudentDetail({
             disabled={!couponFile || saving}
             className="w-full mt-4 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
           >
-            Publier le bulletin
+            Publier le coupon
           </button>
         </div>
 
