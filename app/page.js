@@ -1,0 +1,25 @@
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
+import About from "@/components/About";
+import Filieres from "@/components/Filieres";
+import Values from "@/components/Values";
+import PortalBand from "@/components/PortalBand";
+import Contact from "@/components/Contact";
+import Footer from "@/components/Footer";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
+
+export default function Home() {
+  return (
+    <>
+      <Header />
+      <Hero />
+      <About />
+      <Filieres />
+      <Values />
+      <PortalBand />
+      <Contact />
+      <Footer />
+      <WhatsAppFloat />
+    </>
+  );
+}

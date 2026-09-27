@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+
+# next.js build output
+/.next/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# env files — ne jamais commit ces fichiers (ils contiendront tes clés Supabase en Phase 2)
+.env*.local
+.env
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
