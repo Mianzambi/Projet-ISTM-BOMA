@@ -41,6 +41,18 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  env: {
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nnafbdarhqjzuekmqwqx.supabase.co",
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5uYWZiZGFyaHFqenVla21xd3F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjY1MTEsImV4cCI6MjEwNTYwMjUxMX0.71loflbFEDewNgXepCErU7csvxTnazEc9yOp2cJy9qg",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5uYWZiZGFyaHFqenVla21xd3F4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMjY1MTEsImV4cCI6MjEwNTYwMjUxMX0.71loflbFEDewNgXepCErU7csvxTnazEc9yOp2cJy9qg",
+  },
   async headers() {
     return [
       {
