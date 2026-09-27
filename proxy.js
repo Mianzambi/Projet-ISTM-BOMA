@@ -1,51 +1,60 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-// Le "proxy" tourne avant chaque page : il rafraîchit la session Supabase
-// (cookies) et redirige vers /connexion si quelqu'un essaie d'accéder au
-// tableau de bord sans être connecté.
+// Le proxy/middleware tourne avant chaque page pour rafraîchir les sessions
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-    {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://nnafbdarhqjzuekmqwqx.supabase.co";
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "placeholder-key";
+
+  try {
+    const supabase = createServerClient(url, key, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
+          try {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+            supabaseResponse = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            );
+          } catch {
+            // Ignorer si appelé hors contexte
+          }
         },
       },
+    });
+
+    const isProtectedRoute =
+      request.nextUrl.pathname.startsWith("/tableau-de-bord") ||
+      request.nextUrl.pathname.startsWith("/admin");
+
+    if (isProtectedRoute) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = "/connexion";
+        return NextResponse.redirect(redirectUrl);
+      }
     }
-  );
-
-  // Ne mets rien entre createServerClient et getUser() : une simple erreur ici
-  // peut déconnecter des gens de façon aléatoire, très dur à déboguer.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Seul /tableau-de-bord et /admin sont protégés — le reste du site (vitrine,
-  // connexion, inscription) reste accessible à tout le monde.
-  const isProtectedRoute =
-    request.nextUrl.pathname.startsWith("/tableau-de-bord") ||
-    request.nextUrl.pathname.startsWith("/admin");
-
-  if (isProtectedRoute && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/connexion";
-    return NextResponse.redirect(url);
+  } catch (err) {
+    console.error("Middleware auth error:", err);
   }
 
   return supabaseResponse;
 }
+
+export const middleware = proxy;
+export default proxy;
 
 export const config = {
   matcher: [
