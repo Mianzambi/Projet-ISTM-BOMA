@@ -25,17 +25,6 @@ export default function InscriptionPage() {
       return;
     }
 
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")
-    ) {
-      setError(
-        "Supabase n'est pas encore configuré. Veuillez définir NEXT_PUBLIC_SUPABASE_URL."
-      );
-      setLoading(false);
-      return;
-    }
-
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,

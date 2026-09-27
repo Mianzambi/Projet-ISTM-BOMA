@@ -17,17 +17,7 @@ export default function ConnexionPage() {
     setError(null);
     setLoading(true);
 
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      process.env.NEXT_PUBLIC_SUPABASE_URL.includes("placeholder")
-    ) {
-      setError(
-        "Supabase n'est pas encore configuré. Veuillez définir NEXT_PUBLIC_SUPABASE_URL."
-      );
-      setLoading(false);
-      return;
-    }
-
+    // Connexion Supabase
     const supabase = createClient();
     const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email,
