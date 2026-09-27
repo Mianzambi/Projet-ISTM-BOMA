@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 
-// Le proxy/middleware tourne avant chaque page pour rafraîchir les sessions
 export async function proxy(request) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -47,14 +46,11 @@ export async function proxy(request) {
       }
     }
   } catch (err) {
-    console.error("Middleware auth error:", err);
+    console.error("Proxy auth error:", err);
   }
 
   return supabaseResponse;
 }
-
-export const middleware = proxy;
-export default proxy;
 
 export const config = {
   matcher: [
